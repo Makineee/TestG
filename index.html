@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Silk Roads Survival</title>
+<style>
+:root{--ink:#f6efe3;--mut:#b9b3d6;--gold:#ffc94a;--tq:#3fd0c9;--bad:#ff7a70;--ok:#7be495;--glass:rgba(20,16,50,.72);--line:rgba(255,255,255,.16);
+--c0:#ff7a59;--c1:#3fd0c9;--c2:#ffc94a;--c3:#b58cff;--c4:#7be495;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}*{box-sizing:border-box}
+body{margin:0;color:var(--ink);font:16px/1.5 "Trebuchet MS",Verdana,sans-serif;background:#1b1a3a linear-gradient(180deg,#141233 0%,#3a2960 55%,#c4623f 100%) fixed;min-height:100vh}
+body.screen{font-size:22px}
+h1,h2,h3{font-family:Georgia,"Times New Roman",serif;margin:0 0 .4em;line-height:1.15}h1{font-size:2rem;letter-spacing:.5px}
+main{max-width:940px;margin:0 auto;padding:12px 16px 40px}body.screen main{max-width:1300px}
+.hero{position:relative;overflow:hidden;border-radius:18px;margin-bottom:14px;border:1px solid var(--line);background:linear-gradient(180deg,#1a1745,#5a3a78 70%,#e58a4a)}
+.hero svg{display:block;width:100%;height:auto}.hero h1{position:absolute;left:18px;top:12px;text-shadow:0 2px 10px #000a}
+.hero .sub{position:absolute;left:18px;top:52px;font-size:.85rem;color:var(--mut)}
+.cv{animation:walk 40s linear infinite}@keyframes walk{from{transform:translateX(-260px)}to{transform:translateX(900px)}}
+@media(prefers-reduced-motion:reduce){.cv{animation:none;transform:translateX(200px)}}
+.card{background:var(--glass);border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:14px;backdrop-filter:blur(6px)}
+.center{text-align:center}.big h2{font-size:1.8rem}
+.board{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.team{flex:1 1 120px;background:var(--glass);border:2px solid var(--c,var(--line));border-radius:14px;padding:8px;text-align:center}
+.team b{display:block;font-size:.85rem;color:var(--mut)}.team span{font-family:Georgia,serif;font-size:1.6rem;color:var(--gold)}
+.team.me{box-shadow:0 0 0 3px var(--c),0 0 22px var(--c)}
+button{font:inherit;cursor:pointer;border:0;border-radius:999px;padding:10px 20px;background:linear-gradient(135deg,var(--gold),#ff9a3d);color:#2a1a05;font-weight:800}
+button.alt{background:transparent;color:var(--gold);border:2px solid var(--gold)}button:disabled{opacity:.4;cursor:not-allowed}
+button:focus-visible,select:focus-visible{outline:3px solid var(--tq);outline-offset:2px}
+select{font:inherit;padding:8px;border-radius:10px;border:1px solid var(--line);background:#231f52;color:var(--ink);max-width:100%}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.timer{font-family:Georgia,serif;font-size:2.2rem;color:var(--tq);min-width:3ch}.timer.low{color:var(--bad)}.timer.huge{font-size:5rem}
+.m{display:flex;gap:10px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--line);padding:8px 0}.m p{flex:1 1 300px;margin:0}
+.ok{color:var(--ok);font-weight:700}.bad{color:var(--bad);font-weight:700}.muted{color:var(--mut)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}.chip{border:1px solid var(--line);border-radius:999px;padding:4px 14px}
+.scn{font-family:Georgia,serif;line-height:1.55;font-size:1.2rem}body.screen .scn{font-size:2rem}
+table{width:100%;border-collapse:collapse}td,th{padding:8px;border-bottom:1px solid var(--line);text-align:left}
+.reveal{font-size:2.4rem;font-family:Georgia,serif;color:var(--gold)}.role{font-size:.85rem;color:var(--mut);margin-bottom:8px}
+#trip{position:fixed;inset:0;z-index:50;background:radial-gradient(circle at 50% 40%,#3a2960,#100e2b);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;transition:opacity .6s;padding:16px}
+#trip.out{opacity:0;pointer-events:none}#trip svg{width:min(94vw,960px);height:auto}#trip h2{margin:0;text-align:center;font-size:1.6rem;text-shadow:0 2px 12px #000}#trip p{margin:0;color:var(--mut);font-size:.85rem}
+body.screen #trip h2{font-size:2.6rem}
+button{touch-action:manipulation}
+.raise{width:100%;min-height:34vh;min-height:34dvh;font-size:2.2rem;border-radius:28px;background:var(--c);color:#1a1030;box-shadow:0 8px 0 rgba(0,0,0,.35);letter-spacing:1px}
+.raise:active:not(:disabled){transform:translateY(6px);box-shadow:0 2px 0 rgba(0,0,0,.35)}.raise:disabled{opacity:.55;box-shadow:none}
+.order{display:flex;flex-direction:column;gap:10px;align-items:center}.ord{display:flex;gap:16px;align-items:center;min-width:60%;border:3px solid var(--c);border-radius:16px;padding:8px 20px;background:rgba(255,255,255,.06);font-size:1.6rem}
+.ord span{font-size:2.2rem}.ord b{flex:1;text-align:left}.ord i{color:var(--mut);font-style:normal;font-size:1.1rem}
+@media(max-width:640px){
+ body{font-size:15px}h1{font-size:1.4rem}main{padding:8px 10px 32px}
+ .hero svg{height:110px}.hero h1{font-size:1.3rem;left:12px;top:8px}.hero .sub{left:12px;top:38px;font-size:.72rem}
+ .card{padding:14px;border-radius:14px}.big h2{font-size:1.4rem}
+ .team{flex:1 1 30%;padding:6px 4px}.team b{font-size:.72rem}.team span{font-size:1.25rem}
+ button{padding:12px 18px}.chips button{flex:1 1 100%;min-height:52px}
+ .m select{width:100%;min-height:44px}.timer{font-size:1.8rem}.timer.huge{font-size:3.4rem}
+ table{display:block;overflow-x:auto;font-size:.8rem}td,th{padding:5px 4px}#trip h2{font-size:1.15rem}
+ .raise{font-size:1.9rem}}
+.wl{margin-top:10px}
+#ans{font:inherit;font-size:1.3rem;width:100%;padding:14px;border-radius:14px;border:2px solid var(--gold);background:#231f52;color:var(--ink);margin:8px 0}
+.cf{position:fixed;top:-50px;z-index:40;pointer-events:none;animation:fall 2.6s linear forwards}@keyframes fall{to{transform:translateY(112vh) rotate(360deg)}}
+</style></head><body><main>
+<div class="hero"><svg viewBox="0 0 900 190" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><circle cx="760" cy="48" r="26" fill="#ffe9a8"/><circle cx="772" cy="42" r="24" fill="#3a2a6a"/>
+<g fill="#fff" opacity=".8"><circle cx="90" cy="30" r="1.5"/><circle cx="240" cy="55" r="1.2"/><circle cx="420" cy="26" r="1.6"/><circle cx="560" cy="60" r="1.2"/><circle cx="660" cy="20" r="1.4"/></g>
+<path d="M0 150 Q150 95 300 140 T600 130 T900 120 V190 H0Z" fill="#a8502f"/><path d="M0 170 Q200 130 380 165 T900 150 V190 H0Z" fill="#6b2f3d"/>
+<g class="cv" fill="#1a0f26"><g id="cm"><path d="M0 150h46v-14l6-16 6 16v-6l8-22 8 22v6h4l4 8-4 4v14h-4v-14H50v14h-4v-14H8v14H4v-14L0 158z"/></g><use href="#cm" x="90" y="4"/><use href="#cm" x="180" y="0"/><use href="#cm" x="270" y="4"/></g></svg>
+<h1>Silk Roads Survival</h1><div class="sub">Chang'an → Taklamakan → the Mediterranean</div></div>
+<div class="role"><span id="role"></span> <button class="alt" id="snd" style="padding:2px 12px;font-size:.85rem">🔇 Sound off</button></div><div id="board" class="board"></div><div id="app"><div class="card">Connecting…</div></div>
+</main>
+<script>
+const R1=[
+["Bandit","🦹","thief with a weapon, especially one belonging to a group that attacks people travelling through the countryside"],
+["Steppe","🌾","a large area of land with grass but no trees, especially in eastern Europe, Russia, and Central Asia"],
+["Oasis","🏝️","a place in a desert where there is water and therefore plants and trees, sometimes a village or town"],
+["Tariff","💰","a tax on goods entering a country"],
+["Embassy","🏛️","the group of people who represent their country in a foreign country"],
+["Garrison","🛡️","a group of soldiers living in or defending a town or building, or the buildings that the soldiers live in"],
+["Gestation","🤰","the development of a child or young animal while it is still inside its mother's body"],
+["Heterogeneous","🌍","consisting of many different kinds of people or things"],
+["Sterile","🚫","unable to produce offspring, seeds, or crops"],
+["Pastoral nomadism","🐑","a way of life where communities move from place to place with their livestock to find pasture and water"]];
+const R2=[
+["Avalanche","🏔️","A merchant caravan is crossing a steep, snow-covered pass in the Tianshan Mountains. Suddenly, a massive wall of snow and ice collapses down the slope and buries the trade route. What natural disaster just hit the trade route?"],
+["Hallucination","🌀","While traveling across the desert, you see blurry and distorted images in the distance. What phenomenon are you experiencing?"],
+["Commercial emporia","🏪","Caravans arrive at a large trading centre where merchants from China, Persia, India, and Central Asia meet. Many different goods are bought and sold there, and traders from different regions exchange products and information. What do we call these major centres of trade?"],
+["Great Game","♟️","In the 19th century, Britain and Russia competed for influence and strategic control in Central Asia. They were interested in the region because of its geographical and political importance. What was this long period of geopolitical rivalry called?"],
+["Caravanserai","🏕️","After traveling for several days, caravans are exhausted. Fortunately, they find a roadside complex where merchants can sleep, rest their camels, store their goods and meet other travellers. Where have caravans arrived?"],
+["Autonomous region","🗺️","Caravans enter a territory that is officially part of a larger country. However, the local government has considerable power to manage its own internal affairs instead of being controlled completely by the central government. What kind of territory is this?"],
+["Sedentary civilization","🏡","Thousands of years ago, humans stopped moving from place to place and began building permanent homes, farming land, and forming communities. What do we call this?"]];
+const $=s=>document.querySelector(s),app=$("#app"),N=5,M=["🐪","🦅","🐉","🐎","🐅"];
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const tn=i=>M[i]+" Team "+(i+1);
+let ansFor=0,r1opts=[],off=0;const now=()=>Date.now()+off;
+let db,G=null,T={},isAdmin=false,isScreen=false,me=null,formFor=null,ready=false,PIN="";
+try{const v=sessionStorage.getItem("team");if(v!==null)me=+v}catch(e){}
+const fresh=()=>({phase:"lobby",scores:[5,5,5,5,5],rv:0,r1Start:0,r1rank:[],q:0,qs:[],qStart:0,owner:null,steal:false,out:[],answering:null,answer:null,done:false,msg:"",flash:""});
+const save=p=>db.doc("game/state").update(p).catch(e=>alert(e.message));
+const tsave=(i,p)=>db.doc("teams/t"+i).update(p).catch(e=>alert(e.message));
+function makeDb(){
+ const L={g:[],t:[]};let S={game:null,teams:{}};
+ const gs=()=>({exists:!!S.game,data:()=>S.game});
+ const ts=()=>({docs:Object.entries(S.teams).map(([id,v])=>({id,data:()=>v}))});
+ const es=new EventSource("/events");
+ es.onmessage=e=>{S=JSON.parse(e.data);off=(S.now||Date.now())-Date.now();L.g.forEach(f=>f(gs()));L.t.forEach(f=>f(ts()))};
+ const send=(path,op,data)=>fetch("/api",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({path,op,data,pin:PIN})}).then(r=>{if(!r.ok)throw new Error("Wrong PIN or no permission")});
+ return {doc:p=>({onSnapshot:f=>{L.g.push(f)},set:d=>send(p,"set",d),update:d=>send(p,"update",d)}),collection:()=>({onSnapshot:f=>{L.t.push(f)}})};
+}
+
+let AC=null,muted=true,lastTk="",tready=false;
+function ac(){if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(AC&&AC.state==="suspended")AC.resume();return AC}
+function tone(f,t0,d,type,v){const a=ac();if(!a||muted)return;const o=a.createOscillator(),g=a.createGain(),t=a.currentTime+t0;o.type=type||"sine";o.frequency.value=f;
+ g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(v||.15,t+.02);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+d+.05)}
+const seq=(fs,gap,d,type,v)=>fs.forEach((f,i)=>tone(f,i*gap,d,type,v));
+const SFX={
+ start:()=>seq([392,523,659,784],.12,.3,"triangle",.16),
+ tick:()=>tone(880,0,.08,"square",.05),
+ end:()=>{tone(200,0,.7,"sawtooth",.12);tone(150,0,.7,"sawtooth",.12)},
+ buzz:()=>{tone(660,0,.1,"square",.08);tone(990,.08,.15,"square",.08)},
+ pick:()=>seq([440,660],.1,.2,"triangle",.14),
+ correct:()=>seq([523,659,784,1047],.09,.28,"sine",.16),
+ wrong:()=>{tone(220,0,.25,"sawtooth",.12);tone(165,.2,.45,"sawtooth",.12)},
+ steal:()=>seq([300,500,800],.07,.15,"square",.07),
+ submit:()=>seq([700,900],.06,.1,"sine",.12),
+ result:()=>{seq([262,330,392],0,.8,"triangle",.1);tone(523,.3,.6,"triangle",.12)},
+ walk:d=>{for(let i=0;i<d/450;i++)tone(i%2?110:90,i*.45,.18,"sine",.12)},
+ win:()=>seq([523,523,523,659,784,659,784,1047],.13,.32,"triangle",.14)};
+function change(pg,g,pt,t){
+ if(!pg||!g)return;
+ if(g.phase!==pg.phase){if(g.phase==="r1"||g.phase==="r2")travel(g.phase==="r1"?1:2);({r1:SFX.start,r2:SFX.start,r1result:SFX.result,end:SFX.win})[g.phase]?.();if(g.phase==="end")confetti();return}
+ if(g.phase==="r1review"&&g.rv!==pg.rv)SFX.pick();
+ if(g.phase==="r1")for(let i=0;i<N;i++)if(t["t"+i]?.r1&&!pt["t"+i]?.r1)SFX.submit();
+ if(g.phase==="r2"){
+  if(g.q!==pg.q){SFX.start();return}
+  if(g.done&&!pg.done){const m=g.msg||"";if(m.includes("stole")){SFX.steal();setTimeout(SFX.correct,300);confetti()}else if(m.includes("correct")){SFX.correct();confetti()}else if(m.includes("No team"))SFX.wrong();return}
+  if(g.answering!=null&&pg.answering==null){SFX.pick();if(g.answering===me)try{navigator.vibrate&&navigator.vibrate([200,80,200])}catch(e){}}
+  if(g.out.length>pg.out.length)SFX.wrong();
+  const k=g.q+"-"+g.out.length;
+  for(let i=0;i<N;i++)if(t["t"+i]?.buzzKey===k&&pt["t"+i]?.buzzKey!==k)SFX.buzz();
+ }
+}
+
+const CITY={a:[780,230,"Chang'an"],b:[430,200,"Taklamakan Desert"],c:[110,262,"Mediterranean"]};
+const SEG=["M780,230 C700,120 560,320 430,200","M430,200 C330,110 240,330 110,262"];
+function travel(r){
+ let el=$("#trip");if(!el){el=document.createElement("div");el.id="trip";document.body.appendChild(el)}
+ const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches,dur=reduce?1500:4000;
+ const pt=(k,fill)=>`<circle cx="${CITY[k][0]}" cy="${CITY[k][1]}" r="12" fill="${fill}" stroke="#fff" stroke-width="2"/><text x="${CITY[k][0]}" y="${CITY[k][1]+30}" text-anchor="middle" fill="#f6efe3" font-size="26" font-family="Georgia,serif">${CITY[k][2]}</text>`;
+ el.className="";el.innerHTML=`<h2>Round ${r}: ${r===1?"From Chang'an to the Taklamakan Desert":"From the Taklamakan Desert to the Mediterranean"}</h2>
+ <svg viewBox="0 0 900 400" aria-hidden="true"><rect width="900" height="400" rx="22" fill="#2a2058" stroke="rgba(255,255,255,.18)"/>
+ <path d="M560 60 Q700 40 860 90 L870 330 Q700 380 560 330 Q500 200 560 60Z" fill="#3f3277"/><path d="M30 90 Q200 40 380 80 Q470 200 380 340 Q200 380 30 330Z" fill="#3f3277"/>
+ <ellipse cx="430" cy="215" rx="115" ry="70" fill="#c98b4b" opacity=".85"/><path d="M0 300 Q60 240 140 300 Q100 400 0 400Z" fill="#2a7fa8"/><path d="M40 300 Q100 285 170 320" stroke="#7bd0ee" fill="none" stroke-width="2"/>
+ <g fill="#8a7bc0"><path d="M330 90l18 30h-36zM365 100l14 24h-28zM600 300l16 28h-32zM640 290l12 22h-24z"/></g>
+ <path d="${SEG[0]}" fill="none" stroke="${r===2?"#ffc94a":"rgba(255,255,255,.35)"}" stroke-width="4" stroke-dasharray="${r===2?"none":"8 10"}"/>
+ <path id="sg" d="${SEG[r-1]}" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="4" stroke-dasharray="8 10"/>
+ <path id="tr" d="${SEG[r-1]}" fill="none" stroke="#ffc94a" stroke-width="5" stroke-linecap="round"/>
+ ${pt("a",r===2?"#ffc94a":"#ff7a59")}${pt("b","#3fd0c9")}${r===2?pt("c","#7be495"):""}
+ <text id="cm2" font-size="64" text-anchor="middle" x="0" y="0">🐪</text></svg>`;
+ const p=$("#sg"),tr=$("#tr"),cm=$("#cm2"),L=p.getTotalLength(),t0=performance.now();let done=false;
+ const end=()=>{if(done)return;done=true;el.classList.add("out")};
+ setTimeout(end,dur+500);
+ SFX.walk(dur);
+ (function f(now){if(done)return;let u=Math.min(1,(now-t0)/dur);const e=u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2,q=p.getPointAtLength(L*e);
+  tr.setAttribute("stroke-dasharray",(L*e)+" "+L);cm.setAttribute("transform",`translate(${q.x},${q.y-14+Math.sin(u*60)*4})`);
+  if(u<1)requestAnimationFrame(f)})(t0);
+}
+function init(){
+ if(location.hash==="#admin"){PIN=prompt("Enter host PIN:")||"";isAdmin=true}
+ if(location.hash==="#screen"){isScreen=true;document.body.classList.add("screen")}
+ db=makeDb();
+ const wl=()=>{try{navigator.wakeLock&&navigator.wakeLock.request("screen").catch(()=>{})}catch(e){}};wl();document.addEventListener("visibilitychange",()=>{if(!document.hidden)wl()});
+ $("#snd").onclick=()=>{muted=!muted;if(!muted){ac();SFX.pick()}$("#snd").textContent=muted?"🔇 Sound off":"🔊 Sound on"};
+ db.doc("game/state").onSnapshot(s=>{const n=s.exists?s.data():null;if(tready)change(G,n,T,T);G=n;ready=true;render()});
+ db.collection("teams").onSnapshot(s=>{const n={};s.docs.forEach(d=>n[d.id]=d.data());if(tready)change(G,G,T,n);T=n;tready=true;render()});
+ setInterval(tickTimers,500);
+}
+async function resetAll(){
+ await db.doc("game/state").set(fresh());
+ for(let i=0;i<N;i++)await db.doc("teams/t"+i).set({joined:0,r1:null,buzzKey:"",ts:0});
+}
+const tm=i=>T["t"+i]||{};
+const order=k=>[0,1,2,3,4].filter(i=>tm(i).buzzKey===k&&!G.out.includes(i)).sort((a,b)=>tm(a).ts-tm(b).ts);
+const READ=15000;
+const EXPL={"Bandit":"Robbers lurked on lonely passes and deserts, so merchants travelled in armed caravans and paid for guards.",
+"Steppe":"Vast grasslands across Central Asia were home to horse-riding nomads and formed a natural highway between East and West.",
+"Oasis":"Oases such as Hami and Turpan were lifelines: water, food and rest between stretches of desert.",
+"Tariff":"Rulers taxed goods at gates and borders, so tariffs were a major source of income for cities along the route.",
+"Embassy":"States sent envoys to one another. The Han envoy Zhang Qian's missions helped open links with Central Asia.",
+"Garrison":"Dynasties stationed soldiers in fortified posts to protect traders and guard the frontier.",
+"Gestation":"A biology word: the time a baby or young animal develops inside its mother before birth.",
+"Heterogeneous":"Oasis towns like Hami were ethnically heterogeneous because people of many origins lived in or passed through them.",
+"Sterile":"Land that cannot support crops is sterile, like the shifting sands at the heart of the Taklamakan.",
+"Pastoral nomadism":"Herders moved with sheep, horses and camels to find fresh pasture and water. Their animals also fed the trade."};
+function reviewCard(big){const k=G.rv,w=R1[k];
+ const tt=[0,1,2,3,4].map(t=>{const a=tm(t).r1&&tm(t).r1.a,v=!a||!a[k]?"–":a[k]===w[0]?"✓":"✗";return `<span class="chip ${v==="✓"?"ok":v==="✗"?"bad":"muted"}">${tn(t)} ${v}</span>`}).join("");
+ return `<div class="card ${big?"big center":""}"><h3 class="muted">Answer review ${k+1}/${R1.length}</h3><p class="scn">${esc(w[2])}</p><div class="reveal">${w[1]} ${esc(w[0])}</div><p class="muted">💡 ${esc(EXPL[w[0]])}</p><div class="chips" style="justify-content:center">${tt}</div></div>`}
+const FACT={"Avalanche":"High mountain passes such as those in the Tianshan and Pamirs were among the most dangerous parts of the route, especially in winter.",
+"Hallucination":"Travellers crossing the Taklamakan told of mirages and strange voices. Heat, thirst and exhaustion really can trick the mind.",
+"Commercial emporia":"Cities such as Samarkand and Kashgar were meeting points where goods, religions and ideas travelled together.",
+"Great Game":"The rivalry between the British and Russian empires shaped the borders of Central Asia and Afghanistan.",
+"Caravanserai":"Many were built roughly a day's journey apart, so a caravan always had a safe place to stop.",
+"Autonomous region":"Xinjiang, home of the Taklamakan Desert, is an autonomous region of China.",
+"Sedentary civilization":"Settled farming around river valleys and oases let cities, writing and long-distance trade grow."};
+const fact=q=>`<p class="muted">💡 ${esc(FACT[q[0]]||"")}</p>`;
+function confetti(){if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;const E=["💎","🐪","✨","🎉","🪙"];for(let i=0;i<28;i++){const e=document.createElement("span");e.className="cf";e.textContent=E[i%E.length];e.style.cssText=`left:${Math.random()*96}vw;animation-delay:${Math.random()*.8}s;font-size:${18+Math.random()*22}px`;document.body.appendChild(e);setTimeout(()=>e.remove(),3600)}}
+const wordList=()=>{return `<div class="chips wl">${R2.map(a=>a[0]).sort().map(w=>`<span class="chip">${esc(w)}</span>`).join("")}</div>`};
+const lockInfo=()=>G.buzzKey===G.q+"-"+G.out.length&&G.answering==null&&!G.done&&G.buzzAt?`<p class="ok" style="margin-top:12px">Locking in the fastest team in <b class="timer" id="bw" style="font-size:1.3em"></b>s…</p>`:"";
+const rank=bz=>bz.length?`<div class="order">${bz.map((i,k)=>`<div class="ord" style="--c:var(--c${i})"><span>${["🥇","🥈","🥉"][k]||k+1}</span><b>${tn(i)}</b><i>${k?"+"+((tm(i).ts-tm(bz[0]).ts)/1000).toFixed(2)+"s":"first!"}</i></div>`).join("")}</div>`:'<p class="muted">No hands yet.</p>';
+const fl=()=>G.flash&&!G.done?`<p class="bad" style="font-size:1.25em">${esc(G.flash)}</p>`:"";
+function board(){$("#board").innerHTML=G?G.scores.map((d,i)=>`<div class="team ${i===me?"me":""}" style="--c:var(--c${i})"><b>${tn(i)}${i===me?" (you)":""}</b><span>${d} 💎</span></div>`).join(""):""}
+function render(){
+ if(!ready)return;
+ $("#role").textContent=isAdmin?"Role: Host (admin)":isScreen?"Role: Projector screen":me!=null?"Role: "+tn(me):"";
+ if(!G){
+  app.innerHTML=isAdmin?`<div class="card"><h2>Create the game room</h2><p>You are the host. Create a room so the 5 teams can join.</p><button id="mk">Create room</button></div>`:`<div class="card big center"><h2>Waiting for the host…</h2><p class="muted">The room has not been created yet.</p></div>`;
+  if(isAdmin)$("#mk").onclick=resetAll;return}
+ board();
+ if(isAdmin)return admin();
+ if(isScreen)return screen();
+ if(me==null){app.innerHTML=`<div class="card"><h2>Choose your team</h2><p>Each team uses one device.</p><div class="chips">${[0,1,2,3,4].map(i=>`<button data-t="${i}">${tn(i)}</button>`).join("")}</div></div>`;
+  document.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{me=+b.dataset.t;try{sessionStorage.setItem("team",me)}catch(e){}tsave(me,{joined:now()});render()});return}
+if(tready&&G.phase==="lobby"&&!tm(me).joined)tsave(me,{joined:now()});
+ player();
+}
+function admin(){
+ let h="";const P=G.phase;
+ if(P==="lobby")h=`<div class="card"><h2>Lobby</h2><p>Teams that have joined:</p><div class="chips">${[0,1,2,3,4].map(i=>`<span class="chip ${tm(i).joined?"ok":"muted"}">${tn(i)}: ${tm(i).joined?"joined":"waiting"}</span>`).join("")}</div><p class="muted">Open <b>/#screen</b> on the projector device.</p><button id="s1">Start Round 1</button></div>`;
+ else if(P==="r1")h=`<div class="card"><h2>Round 1 in progress</h2><div class="timer" id="tm"></div><table><tr><th>Team</th><th>Status</th><th>Correct</th><th>Wrong</th><th>Time</th></tr>${[0,1,2,3,4].map(i=>{const r=tm(i).r1;return `<tr><td>${tn(i)}</td><td>${r?'<span class="ok">Submitted</span>':"Working"}</td><td>${r?r.c:"-"}</td><td>${r?r.w:"-"}</td><td>${r?r.el.toFixed(0)+"s":"-"}</td></tr>`}).join("")}</table><p></p><button id="fin">Close &amp; score Round 1</button></div>`;
+ else if(P==="r1result")h=`<div class="card"><h2>Round 1 results</h2>${r1table()}<p></p><div class="row"><button id="rv">Review answers</button><button class="alt" id="s2">Skip to Round 2</button></div></div>`;
+ else if(P==="r1review")h=reviewCard(false).replace(/<\/div>$/,`<div class="row" style="margin-top:12px"><button id="nw">${G.rv<R1.length-1?"Next word":"Start Round 2"}</button>${G.rv<R1.length-1?'<button class="alt" id="s2">Skip to Round 2</button>':""}</div></div>`);
+ else if(P==="r2"){
+  const q=R2[G.qs[G.q]],key=G.q+"-"+G.out.length;
+  const bz=[0,1,2,3,4].filter(i=>tm(i).buzzKey===key&&!G.out.includes(i)).sort((a,b)=>tm(a).ts-tm(b).ts);
+  h=`<div class="card"><h2>Round 2: question ${G.q+1}/${G.qs.length}</h2><div class="row"><b class="ok" style="flex:1 1 200px">Answer: ${q[1]} ${esc(q[0])}${G.steal?" · Steal round":""}</b><div class="timer" id="tm"></div></div><details><summary class="muted">Show question</summary><p class="scn">${esc(q[2])}</p></details></div><div class="card">`;
+  h+=fl();if(G.done)h+=`<p class="ok">${esc(G.msg)}</p>${fact(q)}<button id="nx">${G.q+1<G.qs.length?"Next question":"Final results"}</button>`;
+  else if(G.answering!=null)h+=`<h3>${tn(G.answering)} is answering… <span class="timer" id="at" style="font-size:1.3em"></span></h3><p class="muted">The result appears automatically (15s limit).</p><button class="alt" id="ps">They can't answer (pass)</button>`;
+  else h+=`<h3>Hands raised (in order)</h3>${rank(bz)}${lockInfo()}<p></p><button class="alt" id="sk">Skip question</button>`;
+  h+=`</div>`;
+ }else h=`<div class="card"><h2>Journey complete</h2>${winner()}<button id="rs">Play again (reset everything)</button></div>`;
+ app.innerHTML=h;wire();tickTimers();
+}
+function r1table(){return `<table><tr><th>Rank</th><th>Team</th><th>Correct</th><th>Wrong</th><th>Time</th><th>Bonus − penalty</th></tr>${G.r1rank.map((r,i)=>`<tr><td>${i+1}</td><td>${tn(r.t)}${r.t===me?" (you)":""}</td><td class="ok">${r.c}</td><td class="bad">${r.w}</td><td>${r.el.toFixed(0)}s</td><td>+${r.b} − ${r.w} = <b>${r.b-r.w}</b></td></tr>`).join("")}</table><p class="muted">Ranked by finish time (teams that matched all 10 come first). Bonus +5 / +3 / +2 / +1 / 0, minus 1 for each wrong match.</p>`}
+function winner(){const top=Math.max(...G.scores),o=[0,1,2,3,4].sort((a,b)=>G.scores[b]-G.scores[a]);return `<p class="reveal">🏆 ${G.scores.map((d,i)=>d===top?tn(i):null).filter(Boolean).join(" & ")} — ${top} 💎</p><table>${o.map((i,k)=>`<tr><td>${["🥇","🥈","🥉"][k]||k+1}</td><td>${tn(i)}${i===me?" (you)":""}</td><td>${G.scores[i]} 💎</td></tr>`).join("")}</table>`}
+function screen(){
+ const P=G.phase;let h="";
+ if(P==="lobby")h=`<div class="card big center"><h2>Get ready, travellers!</h2><p>Join on your device and pick your team.</p><div class="chips" style="justify-content:center">${[0,1,2,3,4].map(i=>`<span class="chip ${tm(i).joined?"ok":"muted"}">${tn(i)} ${tm(i).joined?"✓":""}</span>`).join("")}</div></div>`;
+ else if(P==="r1")h=`<div class="card big center"><h2>Round 1: From Chang'an to the Taklamakan Desert</h2><p>Match each word with its definition</p><div class="timer huge" id="tm"></div><div class="chips" style="justify-content:center">${[0,1,2,3,4].map(i=>`<span class="chip ${tm(i).r1?"ok":"muted"}">${tn(i)} ${tm(i).r1?"✓ submitted":"working…"}</span>`).join("")}</div></div>`;
+ else if(P==="r1result")h=`<div class="card big"><h2>Round 1 results</h2>${r1table()}</div>`;
+ else if(P==="r1review")h=reviewCard(true);
+ else if(P==="r2"){
+  const q=R2[G.qs[G.q]],key=G.q+"-"+G.out.length;
+  const bz=[0,1,2,3,4].filter(i=>tm(i).buzzKey===key&&!G.out.includes(i)).sort((a,b)=>tm(a).ts-tm(b).ts);
+  h=`<div class="card"><h3 class="muted">Round 2: question ${G.q+1}/${G.qs.length}${G.steal&&!G.done?" · STEAL!":""}</h3><div class="row"><p class="scn" style="flex:1 1 300px">${esc(q[2])}</p><div class="timer huge" id="tm"></div></div>${wordList()}</div><div class="card center">`;
+  h+=fl();if(G.done)h+=`<div class="reveal">${q[1]} ${esc(q[0])}</div><p class="ok">${esc(G.msg)}</p>${fact(q)}`;
+  else if(G.answering!=null)h+=`<h2>${tn(G.answering)} is answering…</h2><div class="timer huge" id="at"></div>`;
+  else h+=bz.length?`<div class="order">${bz.map((i,k)=>`<div class="ord" style="--c:var(--c${i})"><span>${["🥇","🥈","🥉"][k]||k+1}</span><b>${tn(i)}</b><i>${k?"+"+((tm(i).ts-tm(bz[0]).ts)/1000).toFixed(2)+"s":"first!"}</i></div>`).join("")}</div>${lockInfo()}`:`<h3 class="muted" id="rd"></h3>`;
+  h+=`</div>`;
+ }else h=`<div class="card big center"><h2>Journey complete</h2>${winner()}</div>`;
+ app.innerHTML=h;tickTimers();
+}
+function wire(){
+ const on=(id,f)=>{const e=$(id);if(e)e.onclick=f};
+ on("#s1",()=>save({phase:"r1",r1Start:now()+4500}));
+ on("#fin",()=>{
+  const rs=[0,1,2,3,4].map(t=>{const r=tm(t).r1;return r?{t,c:r.c,w:r.w,el:r.el,full:!!r.full}:{t,c:0,w:0,el:120,full:false}}).sort((a,b)=>(b.full-a.full)||(a.full?a.el-b.el:(b.c-a.c||a.el-b.el)));
+  const bo=[5,3,2,1,0],sc=[...G.scores];rs.forEach((r,i)=>{r.b=bo[i];sc[r.t]+=r.b-r.w});
+  save({phase:"r1result",r1rank:rs,scores:sc})});
+ const startR2=()=>save({phase:"r2",q:0,qs:shuffle(R2.map((_,i)=>i)),qStart:now()+4500,owner:null,steal:false,out:[],answering:null,answer:null,done:false,msg:"",flash:""});
+ on("#s2",startR2);on("#nw",()=>G.rv<R1.length-1?save({rv:G.rv+1}):startR2());on("#rv",()=>save({phase:"r1review",rv:0}));
+ document.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>save({answering:+b.dataset.a,answer:null,flash:""}));
+ on("#sk",()=>save({done:true,msg:"Question skipped."}));
+ on("#nx",()=>G.q+1<G.qs.length?save({q:G.q+1,qStart:now(),owner:null,steal:false,out:[],answering:null,answer:null,done:false,msg:"",flash:""}):save({phase:"end"}));
+ on("#rs",()=>confirm("Reset everything and play again?")&&resetAll());
+ on("#ps",()=>{const a=G.answering,out=[...G.out,a],p={out,answering:null,answer:null,flash:`${tn(a)} passed`};if(!G.steal){p.steal=true;p.owner=a}if(out.length>=N){p.done=true;p.msg="No team got it right."}save(p)});
+ on("#cf",()=>{
+  const q=R2[G.qs[G.q]],a=G.answering,sc=[...G.scores];
+  if(G.answer===q[0]){
+   if(!G.steal){sc[a]+=5;save({scores:sc,done:true,answering:null,msg:`${tn(a)} is correct: +5 💎`})}
+   else{const h=Math.floor(sc[G.owner]/2);sc[G.owner]-=h;sc[a]+=h;save({scores:sc,done:true,answering:null,msg:`${tn(a)} stole it and takes ${h} 💎 from ${tn(G.owner)}`})}
+  }else{
+   const out=[...G.out,a],p={out,answering:null,answer:null};
+   if(!G.steal){p.steal=true;p.owner=a}
+   if(out.length>=N){p.done=true;p.msg="No team got it right."}
+   save(p);
+  }});
+}
+function player(){
+ const P=G.phase,r=tm(me).r1;let h="";
+ if(P==="r2"&&G.answering===me&&!G.done&&ansFor===G.ansAt&&$("#ans"))return;
+ if(P==="lobby")h=`<div class="card center"><h2>${M[me]} You're in!</h2><p>Waiting for the host to start Round 1.</p></div>`;
+ else if(P==="r1"){
+  if(r)h=`<div class="card center"><h2>Submitted ✓</h2><p>You got <b class="ok">${r.c}</b> right and <b class="bad">${r.w}</b> wrong. Waiting for the host to score.</p></div>`;
+  else{
+   if(formFor===G.r1Start&&$("#f1"))return;
+   formFor=G.r1Start;const opts=r1opts=R1.map(w=>w[0]).sort();
+   h=`<div class="card" id="f1"><div class="row"><div class="timer" id="tm"></div><span class="muted" id="cnt">0/10 matched</span><button id="sub" style="margin-left:auto" disabled>Submit</button></div>${shuffle(R1.map((_,i)=>i)).map(i=>`<div class="m"><p>${esc(R1[i][2])}</p><select data-i="${i}" aria-label="Choose a word"><option value="">Choose a word…</option>${opts.map(o=>`<option>${esc(o)}</option>`).join("")}</select></div>`).join("")}</div>`;
+  }
+ }else if(P==="r1result")h=`<div class="card"><h2>Round 1 results</h2>${r1table()}<p class="muted">Waiting for the host…</p></div>`;
+ else if(P==="r1review")h=reviewCard(false);
+ else if(P==="r2"){
+  const q=R2[G.qs[G.q]],key=G.q+"-"+G.out.length,out=G.out.includes(me);
+  h=`<div class="card"><h2>Question ${G.q+1}/${G.qs.length}</h2><div class="row"><p class="scn" style="flex:1 1 300px">${esc(q[2])}</p><div class="timer" id="tm"></div></div>${wordList()}</div><div class="card">`;
+  h+=fl();if(G.done)h+=`<p class="ok">${esc(G.msg)}</p><p class="reveal">${q[1]} ${esc(q[0])}</p>${fact(q)}`;
+  else if(G.answering===me)h+=`<h3>Your turn! Type the word within <span class="timer" id="at" style="font-size:1.4em"></span>s</h3><input id="ans" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Type the word…" aria-label="Your answer"><button id="go" style="width:100%">Submit</button>`;
+  else if(G.answering!=null)h+=`<p>${tn(G.answering)} is answering…</p>`;
+  else if(out)h+=`<p class="bad">Your team already answered wrong on this question.</p>`;
+  else{const mine=tm(me).buzzKey===key,pos=order(key).indexOf(me)+1;
+   h+=`<p class="center">${G.steal?"Steal round! ":""}${mine?(pos?"You are #"+pos+" in line":"Hand raised"):'<span id="rd"></span>'}</p><button id="bz" class="raise" style="--c:var(--c${me})" ${mine||now()<G.qStart+READ?"disabled":""}>${mine?"✋ Raised":"✋ RAISE HAND"}</button>${lockInfo()}`}
+  h+=`</div>`;
+ }else h=`<div class="card center"><h2>Journey complete</h2>${winner()}</div>`;
+ app.innerHTML=h;
+ const on=(id,f)=>{const e=$(id);if(e)e.onclick=f};
+ on("#sub",submitR1);
+ on("#bz",()=>tsave(me,{buzzKey:G.q+"-"+G.out.length,ts:now()}));
+ const inp=$("#ans");
+ if(inp){ansFor=G.ansAt;const go=()=>{const v=inp.value.trim();if(!v)return;inp.disabled=true;$("#go").disabled=true;db.doc("game/answer").update({team:me,answer:v}).catch(e=>{alert(e.message);inp.disabled=false;$("#go").disabled=false})};$("#go").onclick=go;inp.onkeydown=e=>{if(e.key==="Enter")go()};inp.focus()}
+ const sels=[...document.querySelectorAll("#f1 select")];
+ if(sels.length){const refresh=()=>{const used=sels.map(x=>x.value).filter(Boolean);sels.forEach(x=>{const cur=x.value;$("#cnt").textContent=used.length+"/10 matched";$("#sub").disabled=used.length<R1.length;x.innerHTML='<option value="">Choose a word…</option>'+r1opts.filter(w=>w===cur||!used.includes(w)).map(w=>`<option${w===cur?" selected":""}>${esc(w)}</option>`).join("")})};sels.forEach(x=>x.onchange=refresh)}
+ tickTimers();
+}
+function submitR1(){
+ if(tm(me).r1)return;
+ let c=0,w=0,f=0;const a=[];document.querySelectorAll("#f1 select").forEach(s=>{const i=+s.dataset.i;a[i]=s.value||"";if(!s.value)return;f++;s.value===R1[i][0]?c++:w++});
+ const el=Math.max(0,Math.min(120,(now()-G.r1Start)/1000));
+ const o={c,w,el,full:f===R1.length,a};T["t"+me]={...tm(me),r1:o};tsave(me,{r1:o});render();
+}
+function tickTimers(){
+ if(G){const a=$("#at");if(a&&G.ansAt){const l=Math.max(0,Math.ceil(15-(now()-G.ansAt)/1000));a.textContent=l;a.classList.toggle("low",l<=3)}
+  if(G.phase==="r2"){const rd=now()<G.qStart+READ,h=$("#rd");if(h)h.textContent=rd?"📖 Read the question… hands up when the timer ends":"✋ Raise your hand if you know!";
+   const z=$("#bz");if(z&&!isAdmin&&!isScreen&&me!=null&&tm(me).buzzKey!==G.q+"-"+G.out.length){z.disabled=rd;z.textContent=rd?"📖 Reading…":"✋ RAISE HAND"}}
+  const b=$("#bw");if(b&&G.buzzAt)b.textContent=Math.max(0,Math.ceil(6-(now()-G.buzzAt)/1000))}
+ const e=$("#tm");if(!e||!G)return;let left;
+ if(G.phase==="r1"){left=Math.min(120,Math.max(0,Math.ceil(120-(now()-G.r1Start)/1000)));e.textContent=Math.floor(left/60)+":"+String(left%60).padStart(2,"0");if(left<=0&&!isAdmin&&!isScreen&&me!=null&&!tm(me).r1&&$("#f1"))submitR1()}
+ else if(G.phase==="r2"){left=G.done?0:Math.min(15,Math.max(0,Math.ceil(15-(now()-G.qStart)/1000)));e.textContent=left}
+ e.classList.toggle("low",left<=(G.phase==="r1"?15:5));
+ const k=G.phase+G.q+":"+left,pv=lastTk;lastTk=k;
+ if(k!==pv&&!(G.phase==="r2"&&G.done)){if(left>0&&left<=(G.phase==="r1"?10:5))SFX.tick();else if(left===0&&pv)SFX.end()}
+}
+init();
+</script></body></html>
