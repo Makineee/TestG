@@ -3,7 +3,7 @@ const PIN=process.env.ADMIN_PIN||"1234",PORT=process.env.PORT||3000;
 const R2A=["Avalanche","Hallucination","Commercial emporia","Great Game","Caravanserai","Autonomous region","Sedentary civilization"];
 const TN=["🐪 Team 1","🦅 Team 2","🐉 Team 3","🐎 Team 4","🐅 Team 5"];
 const WIN_MS=6000,ANS_MS=15000;
-function failTeam(g,team,why){g.out=[...g.out,team];if(!g.steal){g.steal=true;g.owner=team}g.answering=null;g.answer=null;g.flash=why;if(g.out.length>=5){g.done=true;g.msg="No team got it right."}}
+function failTeam(g,team,why){g.out=[...g.out,team];if(!g.steal){g.steal=true;g.owner=team}g.answering=null;g.answer=null;g.flash=why;if(g.out.length>=3){g.done=true;g.msg="No team got it right."}}
 const norm=t=>String(t).toLowerCase().replace(/[^a-z0-9 ]/g,"").replace(/\s+/g," ").trim();
 function judge(team,ans){const g=S.game;if(!g||g.phase!=="r2"||g.done||g.answering!==team)return;
  const right=R2A[g.qs[g.q]],sc=[...g.scores];
@@ -32,7 +32,7 @@ http.createServer((req,res)=>{
    if(op==="set"){if(!adm)throw 0;S.game=data}
    else{const k=Object.keys(data);if(!adm&&!(k.length===1&&k[0]==="answer"))throw 0;S.game={...S.game,...data}}
   }else if(/^teams\/t[0-4]$/.test(p)){
-   if(data&&data.buzzKey){const g=S.game;if(g&&g.phase==="r2"&&Date.now()<g.qStart+15000-300)throw 0}
+   if(data&&data.buzzKey){const g=S.game;if(g&&g.phase==="r2"&&Date.now()<g.qStart+15000-300)throw 0;if(g&&g.phase==="r2"&&g.out.includes(+p.slice(7)))throw 0}
    const id=p.slice(6);if(data&&"ts" in data)data.ts=Date.now();if(op==="set"){if(!adm)throw 0;S.teams[id]=data}else S.teams[id]={...S.teams[id],...data}
   }else throw 0;
   if(p.startsWith("teams/")&&data&&data.buzzKey)onBuzz();

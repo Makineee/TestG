@@ -60,7 +60,7 @@ button{touch-action:manipulation}
 <path d="M0 150 Q150 95 300 140 T600 130 T900 120 V190 H0Z" fill="#a8502f"/><path d="M0 170 Q200 130 380 165 T900 150 V190 H0Z" fill="#6b2f3d"/>
 <g class="cv" fill="#1a0f26"><g id="cm"><path d="M0 150h46v-14l6-16 6 16v-6l8-22 8 22v6h4l4 8-4 4v14h-4v-14H50v14h-4v-14H8v14H4v-14L0 158z"/></g><use href="#cm" x="90" y="4"/><use href="#cm" x="180" y="0"/><use href="#cm" x="270" y="4"/></g></svg>
 <h1>Silk Roads Survival</h1><div class="sub">Chang'an → Taklamakan → the Mediterranean</div></div>
-<div class="role"><span id="role"></span> <button class="alt" id="snd" style="padding:2px 12px;font-size:.85rem">🔇 Sound off</button></div><div id="board" class="board"></div><div id="app"><div class="card">Connecting…</div></div>
+<div class="role"><span id="role"></span> <button class="alt" id="snd" style="padding:2px 12px;font-size:.85rem">🔇 Sound off</button> <button class="alt" id="mus" style="padding:2px 12px;font-size:.85rem">🎵 Music off</button></div><div id="board" class="board"></div><div id="app"><div class="card">Connecting…</div></div>
 </main>
 <script>
 const R1=[
@@ -109,8 +109,8 @@ function tone(f,t0,d,type,v){const a=ac();if(!a||muted)return;const o=a.createOs
 const seq=(fs,gap,d,type,v)=>fs.forEach((f,i)=>tone(f,i*gap,d,type,v));
 const SFX={
  start:()=>seq([392,523,659,784],.12,.3,"triangle",.16),
- tick:()=>tone(880,0,.08,"square",.05),
- end:()=>{tone(200,0,.7,"sawtooth",.12);tone(150,0,.7,"sawtooth",.12)},
+ tick:()=>tone(880,0,.08,"square",.09),
+ end:()=>{[0,.4,.8].forEach(t=>{tone(880,t,.32,"square",.3);tone(660,t,.32,"square",.3)});tone(110,0,1.3,"sawtooth",.3)},
  buzz:()=>{tone(660,0,.1,"square",.08);tone(990,.08,.15,"square",.08)},
  pick:()=>seq([440,660],.1,.2,"triangle",.14),
  correct:()=>seq([523,659,784,1047],.09,.28,"sine",.16),
@@ -120,6 +120,19 @@ const SFX={
  result:()=>{seq([262,330,392],0,.8,"triangle",.1);tone(523,.3,.6,"triangle",.12)},
  walk:d=>{for(let i=0;i<d/450;i++)tone(i%2?110:90,i*.45,.18,"sine",.12)},
  win:()=>seq([523,523,523,659,784,659,784,1047],.13,.32,"triangle",.14)};
+let musicOn=false,mg=null,mTimer=0,mNext=0,mStep=0,mIdx=3,noiseBuf=null;
+const SCALE=[293.66,311.13,369.99,392,440,466.16,523.25,587.33,622.25];
+function mnote(f,t,d,type,v){const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(v,t+.015);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(mg);o.start(t);o.stop(t+d+.05)}
+function mstep(step,t){
+ if(step%16===0){mnote(73.42,t,3.2,"triangle",.09);mnote(110,t,3.2,"sine",.05)}
+ if(step%8===0){const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(110,t);o.frequency.exponentialRampToValueAtTime(45,t+.15);g.gain.setValueAtTime(.16,t);g.gain.exponentialRampToValueAtTime(.001,t+.25);o.connect(g);g.connect(mg);o.start(t);o.stop(t+.3)}
+ else if(step%4===0){if(!noiseBuf){noiseBuf=AC.createBuffer(1,2205,44100);const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1}
+  const n=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();n.buffer=noiseBuf;f.type="bandpass";f.frequency.value=3200;g.gain.setValueAtTime(.05,t);g.gain.exponentialRampToValueAtTime(.001,t+.06);n.connect(f);f.connect(g);g.connect(mg);n.start(t)}
+ if(Math.random()<.6){mIdx=Math.max(0,Math.min(SCALE.length-1,mIdx+[-2,-1,-1,0,1,1,2][Math.random()*7|0]));mnote(SCALE[mIdx],t,.7,"triangle",.07);if(step%8===0)mnote(SCALE[mIdx]/2,t,.9,"sine",.04)}
+}
+function msched(){if(!AC)return;const bpm=G&&(G.phase==="r1"||G.phase==="r2")?100:78;while(mNext<AC.currentTime+.5){mstep(mStep,mNext);mNext+=60/bpm/2;mStep=(mStep+1)%32}}
+function startMusic(){if(!ac())return;mg=AC.createGain();mg.gain.value=.8;mg.connect(AC.destination);mNext=AC.currentTime+.1;mStep=0;clearInterval(mTimer);mTimer=setInterval(msched,120)}
+function stopMusic(){clearInterval(mTimer);if(mg){const g=mg;g.gain.setTargetAtTime(0,AC.currentTime,.05);setTimeout(()=>{try{g.disconnect()}catch(e){}},400);mg=null}}
 function change(pg,g,pt,t){
  if(!pg||!g)return;
  if(g.phase!==pg.phase){if(g.phase==="r1"||g.phase==="r2")travel(g.phase==="r1"?1:2);({r1:SFX.start,r2:SFX.start,r1result:SFX.result,end:SFX.win})[g.phase]?.();if(g.phase==="end")confetti();return}
@@ -164,7 +177,9 @@ function init(){
  if(location.hash==="#screen"){isScreen=true;document.body.classList.add("screen")}
  db=makeDb();
  const wl=()=>{try{navigator.wakeLock&&navigator.wakeLock.request("screen").catch(()=>{})}catch(e){}};wl();document.addEventListener("visibilitychange",()=>{if(!document.hidden)wl()});
- $("#snd").onclick=()=>{muted=!muted;if(!muted){ac();SFX.pick()}$("#snd").textContent=muted?"🔇 Sound off":"🔊 Sound on"};
+ $("#snd").onclick=()=>{muted=!muted;if(!muted){ac();SFX.pick()}$("#snd").textContent=muted?"🔇 Sound off":"🔊 Sound on";if(isScreen&&musicOn===muted){musicOn=!muted;musicOn?startMusic():stopMusic();$("#mus").textContent=musicOn?"🎵 Music on":"🎵 Music off"}};
+ if(!isScreen)$("#mus").style.display="none";
+ $("#mus").onclick=()=>{musicOn=!musicOn;musicOn?startMusic():stopMusic();$("#mus").textContent=musicOn?"🎵 Music on":"🎵 Music off"};
  db.doc("game/state").onSnapshot(s=>{const n=s.exists?s.data():null;if(tready)change(G,n,T,T);G=n;ready=true;render()});
  db.collection("teams").onSnapshot(s=>{const n={};s.docs.forEach(d=>n[d.id]=d.data());if(tready)change(G,G,T,n);T=n;tready=true;render()});
  setInterval(tickTimers,500);
@@ -175,7 +190,7 @@ async function resetAll(){
 }
 const tm=i=>T["t"+i]||{};
 const order=k=>[0,1,2,3,4].filter(i=>tm(i).buzzKey===k&&!G.out.includes(i)).sort((a,b)=>tm(a).ts-tm(b).ts);
-const READ=15000;
+const READ=15000,MAXTRY=3;
 const EXPL={"Bandit":"Robbers lurked on lonely passes and deserts, so merchants travelled in armed caravans and paid for guards.",
 "Steppe":"Vast grasslands across Central Asia were home to horse-riding nomads and formed a natural highway between East and West.",
 "Oasis":"Oases such as Hami and Turpan were lifelines: water, food and rest between stretches of desert.",
@@ -226,7 +241,7 @@ function admin(){
  else if(P==="r2"){
   const q=R2[G.qs[G.q]],key=G.q+"-"+G.out.length;
   const bz=[0,1,2,3,4].filter(i=>tm(i).buzzKey===key&&!G.out.includes(i)).sort((a,b)=>tm(a).ts-tm(b).ts);
-  h=`<div class="card"><h2>Round 2: question ${G.q+1}/${G.qs.length}</h2><div class="row"><b class="ok" style="flex:1 1 200px">Answer: ${q[1]} ${esc(q[0])}${G.steal?" · Steal round":""}</b><div class="timer" id="tm"></div></div><details><summary class="muted">Show question</summary><p class="scn">${esc(q[2])}</p></details></div><div class="card">`;
+  h=`<div class="card"><h2>Round 2: question ${G.q+1}/${G.qs.length}</h2><div class="row"><b class="ok" style="flex:1 1 200px">Answer: ${q[1]} ${esc(q[0])}${G.steal?" · Steal "+G.out.length+"/2":""}</b><div class="timer" id="tm"></div></div><details><summary class="muted">Show question</summary><p class="scn">${esc(q[2])}</p></details></div><div class="card">`;
   h+=fl();if(G.done)h+=`<p class="ok">${esc(G.msg)}</p>${fact(q)}<button id="nx">${G.q+1<G.qs.length?"Next question":"Final results"}</button>`;
   else if(G.answering!=null)h+=`<h3>${tn(G.answering)} is answering… <span class="timer" id="at" style="font-size:1.3em"></span></h3><p class="muted">The result appears automatically (15s limit).</p><button class="alt" id="ps">They can't answer (pass)</button>`;
   else h+=`<h3>Hands raised (in order)</h3>${rank(bz)}${lockInfo()}<p></p><button class="alt" id="sk">Skip question</button>`;
@@ -245,7 +260,7 @@ function screen(){
  else if(P==="r2"){
   const q=R2[G.qs[G.q]],key=G.q+"-"+G.out.length;
   const bz=[0,1,2,3,4].filter(i=>tm(i).buzzKey===key&&!G.out.includes(i)).sort((a,b)=>tm(a).ts-tm(b).ts);
-  h=`<div class="card"><h3 class="muted">Round 2: question ${G.q+1}/${G.qs.length}${G.steal&&!G.done?" · STEAL!":""}</h3><div class="row"><p class="scn" style="flex:1 1 300px">${esc(q[2])}</p><div class="timer huge" id="tm"></div></div>${wordList()}</div><div class="card center">`;
+  h=`<div class="card"><h3 class="muted">Round 2: question ${G.q+1}/${G.qs.length}${G.steal&&!G.done?" · STEAL "+G.out.length+"/2!":""}</h3><div class="row"><p class="scn" style="flex:1 1 300px">${esc(q[2])}</p><div class="timer huge" id="tm"></div></div>${wordList()}</div><div class="card center">`;
   h+=fl();if(G.done)h+=`<div class="reveal">${q[1]} ${esc(q[0])}</div><p class="ok">${esc(G.msg)}</p>${fact(q)}`;
   else if(G.answering!=null)h+=`<h2>${tn(G.answering)} is answering…</h2><div class="timer huge" id="at"></div>`;
   else h+=bz.length?`<div class="order">${bz.map((i,k)=>`<div class="ord" style="--c:var(--c${i})"><span>${["🥇","🥈","🥉"][k]||k+1}</span><b>${tn(i)}</b><i>${k?"+"+((tm(i).ts-tm(bz[0]).ts)/1000).toFixed(2)+"s":"first!"}</i></div>`).join("")}</div>${lockInfo()}`:`<h3 class="muted" id="rd"></h3>`;
@@ -266,7 +281,7 @@ function wire(){
  on("#sk",()=>save({done:true,msg:"Question skipped."}));
  on("#nx",()=>G.q+1<G.qs.length?save({q:G.q+1,qStart:now(),owner:null,steal:false,out:[],answering:null,answer:null,done:false,msg:"",flash:""}):save({phase:"end"}));
  on("#rs",()=>confirm("Reset everything and play again?")&&resetAll());
- on("#ps",()=>{const a=G.answering,out=[...G.out,a],p={out,answering:null,answer:null,flash:`${tn(a)} passed`};if(!G.steal){p.steal=true;p.owner=a}if(out.length>=N){p.done=true;p.msg="No team got it right."}save(p)});
+ on("#ps",()=>{const a=G.answering,out=[...G.out,a],p={out,answering:null,answer:null,flash:`${tn(a)} passed`};if(!G.steal){p.steal=true;p.owner=a}if(out.length>=MAXTRY){p.done=true;p.msg="No team got it right."}save(p)});
  on("#cf",()=>{
   const q=R2[G.qs[G.q]],a=G.answering,sc=[...G.scores];
   if(G.answer===q[0]){
@@ -275,7 +290,7 @@ function wire(){
   }else{
    const out=[...G.out,a],p={out,answering:null,answer:null};
    if(!G.steal){p.steal=true;p.owner=a}
-   if(out.length>=N){p.done=true;p.msg="No team got it right."}
+   if(out.length>=MAXTRY){p.done=true;p.msg="No team got it right."}
    save(p);
   }});
 }
@@ -300,7 +315,7 @@ function player(){
   else if(G.answering!=null)h+=`<p>${tn(G.answering)} is answering…</p>`;
   else if(out)h+=`<p class="bad">Your team already answered wrong on this question.</p>`;
   else{const mine=tm(me).buzzKey===key,pos=order(key).indexOf(me)+1;
-   h+=`<p class="center">${G.steal?"Steal round! ":""}${mine?(pos?"You are #"+pos+" in line":"Hand raised"):'<span id="rd"></span>'}</p><button id="bz" class="raise" style="--c:var(--c${me})" ${mine||now()<G.qStart+READ?"disabled":""}>${mine?"✋ Raised":"✋ RAISE HAND"}</button>${lockInfo()}`}
+   h+=`<p class="center">${G.steal?"Steal "+G.out.length+"/2! ":""}${mine?(pos?"You are #"+pos+" in line":"Hand raised"):'<span id="rd"></span>'}</p><button id="bz" class="raise" style="--c:var(--c${me})" ${mine||now()<G.qStart+READ?"disabled":""}>${mine?"✋ Raised":"✋ RAISE HAND"}</button>${lockInfo()}`}
   h+=`</div>`;
  }else h=`<div class="card center"><h2>Journey complete</h2>${winner()}</div>`;
  app.innerHTML=h;
