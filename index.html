@@ -249,7 +249,7 @@ function admin(){
  }else h=`<div class="card"><h2>Journey complete</h2>${winner()}<button id="rs">Play again (reset everything)</button></div>`;
  app.innerHTML=h;wire();tickTimers();
 }
-function r1table(){return `<table><tr><th>Rank</th><th>Team</th><th>Correct</th><th>Wrong</th><th>Time</th><th>Bonus − penalty</th></tr>${G.r1rank.map((r,i)=>`<tr><td>${i+1}</td><td>${tn(r.t)}${r.t===me?" (you)":""}</td><td class="ok">${r.c}</td><td class="bad">${r.w}</td><td>${r.el.toFixed(0)}s</td><td>+${r.b} − ${r.w} = <b>${r.b-r.w}</b></td></tr>`).join("")}</table><p class="muted">Ranked by finish time (teams that matched all 10 come first). Bonus +5 / +3 / +2 / +1 / 0, minus 1 for each wrong match.</p>`}
+function r1table(){return `<table><tr><th>Rank</th><th>Team</th><th>Correct</th><th>Wrong</th><th>Time</th><th>Speed + correct − wrong</th></tr>${G.r1rank.map((r,i)=>`<tr><td>${i+1}</td><td>${tn(r.t)}${r.t===me?" (you)":""}</td><td class="ok">${r.c}</td><td class="bad">${r.w}</td><td>${r.el.toFixed(0)}s</td><td>+${r.b} +${r.c} − ${r.w} = <b>${r.b+r.c-r.w}</b></td></tr>`).join("")}</table><p class="muted">Ranked by finish time (teams that matched all 10 come first). Speed bonus +5 / +3 / +2 / +1 / 0, plus 1 for each correct match, minus 1 for each wrong match.</p>`}
 function winner(){const top=Math.max(...G.scores),o=[0,1,2,3,4].sort((a,b)=>G.scores[b]-G.scores[a]);return `<p class="reveal">🏆 ${G.scores.map((d,i)=>d===top?tn(i):null).filter(Boolean).join(" & ")} — ${top} 💎</p><table>${o.map((i,k)=>`<tr><td>${["🥇","🥈","🥉"][k]||k+1}</td><td>${tn(i)}${i===me?" (you)":""}</td><td>${G.scores[i]} 💎</td></tr>`).join("")}</table>`}
 function screen(){
  const P=G.phase;let h="";
@@ -273,7 +273,7 @@ function wire(){
  on("#s1",()=>save({phase:"r1",r1Start:now()+4500}));
  on("#fin",()=>{
   const rs=[0,1,2,3,4].map(t=>{const r=tm(t).r1;return r?{t,c:r.c,w:r.w,el:r.el,full:!!r.full}:{t,c:0,w:0,el:120,full:false}}).sort((a,b)=>(b.full-a.full)||(a.full?a.el-b.el:(b.c-a.c||a.el-b.el)));
-  const bo=[5,3,2,1,0],sc=[...G.scores];rs.forEach((r,i)=>{r.b=bo[i];sc[r.t]+=r.b-r.w});
+  const bo=[5,3,2,1,0],sc=[...G.scores];rs.forEach((r,i)=>{r.b=bo[i];sc[r.t]+=r.b+r.c-r.w});
   save({phase:"r1result",r1rank:rs,scores:sc})});
  const startR2=()=>save({phase:"r2",q:0,qs:shuffle(R2.map((_,i)=>i)),qStart:now()+4500,owner:null,steal:false,out:[],answering:null,answer:null,done:false,msg:"",flash:""});
  on("#s2",startR2);on("#nw",()=>G.rv<R1.length-1?save({rv:G.rv+1}):startR2());on("#rv",()=>save({phase:"r1review",rv:0}));
