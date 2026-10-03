@@ -85,11 +85,11 @@ const R2=[
 const $=s=>document.querySelector(s),app=$("#app"),N=5,M=["🐪","🦅","🐉","🐎","🐅"];
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
-const tn=i=>M[i]+" Team "+(i+1);
+const tn=i=>i===5?"🎓 Teacher":M[i]+" Team "+(i+1);
 let ansFor=0,r1opts=[],off=0;const now=()=>Date.now()+off;
 let db,G=null,T={},isAdmin=false,isScreen=false,me=null,formFor=null,ready=false,PIN="";
 try{const v=sessionStorage.getItem("team");if(v!==null)me=+v}catch(e){}
-const fresh=()=>({phase:"lobby",scores:[5,5,5,5,5],rv:0,r1Start:0,r1rank:[],q:0,qs:[],qStart:0,owner:null,steal:false,out:[],answering:null,answer:null,done:false,msg:"",flash:""});
+const fresh=()=>({phase:"lobby",scores:[5,5,5,5,5],rv:0,tAns:{},tR1:null,tScore2:0,tReveal:false,r1Start:0,r1rank:[],q:0,qs:[],qStart:0,owner:null,steal:false,out:[],answering:null,answer:null,done:false,msg:"",flash:""});
 const save=p=>db.doc("game/state").update(p).catch(e=>alert(e.message));
 const tsave=(i,p)=>db.doc("teams/t"+i).update(p).catch(e=>alert(e.message));
 function makeDb(){
@@ -136,6 +136,7 @@ function stopMusic(){clearInterval(mTimer);if(mg){const g=mg;g.gain.setTargetAtT
 function change(pg,g,pt,t){
  if(!pg||!g)return;
  if(g.phase!==pg.phase){if(g.phase==="r1"||g.phase==="r2")travel(g.phase==="r1"?1:2);({r1:SFX.start,r2:SFX.start,r1result:SFX.result,end:SFX.win})[g.phase]?.();if(g.phase==="end")confetti();return}
+ if(g.tReveal&&!pg.tReveal){SFX.win();confetti();return}
  if(g.phase==="r1review"&&g.rv!==pg.rv)SFX.pick();
  if(g.phase==="r1")for(let i=0;i<N;i++)if(t["t"+i]?.r1&&!pt["t"+i]?.r1)SFX.submit();
  if(g.phase==="r2"){
@@ -186,7 +187,7 @@ function init(){
 }
 async function resetAll(){
  await db.doc("game/state").set(fresh());
- for(let i=0;i<N;i++)await db.doc("teams/t"+i).set({joined:0,r1:null,buzzKey:"",ts:0});
+ for(let i=0;i<=N;i++)await db.doc("teams/t"+i).set({joined:0,r1:null,buzzKey:"",ts:0});
 }
 const tm=i=>T["t"+i]||{};
 const order=k=>[0,1,2,3,4].filter(i=>tm(i).buzzKey===k&&!G.out.includes(i)).sort((a,b)=>tm(a).ts-tm(b).ts);
@@ -216,8 +217,31 @@ function confetti(){if(matchMedia("(prefers-reduced-motion: reduce)").matches)re
 const wordList=()=>{return `<div class="chips wl">${R2.map(a=>a[0]).sort().map(w=>`<span class="chip">${esc(w)}</span>`).join("")}</div>`};
 const lockInfo=()=>G.buzzKey===G.q+"-"+G.out.length&&G.answering==null&&!G.done&&G.buzzAt?`<p class="ok" style="margin-top:12px">Locking in the fastest team in <b class="timer" id="bw" style="font-size:1.3em"></b>s…</p>`:"";
 const rank=bz=>bz.length?`<div class="order">${bz.map((i,k)=>`<div class="ord" style="--c:var(--c${i})"><span>${["🥇","🥈","🥉"][k]||k+1}</span><b>${tn(i)}</b><i>${k?"+"+((tm(i).ts-tm(bz[0]).ts)/1000).toFixed(2)+"s":"first!"}</i></div>`).join("")}</div>`:'<p class="muted">No hands yet.</p>';
+const tTotal=()=>5+(G&&G.tR1?G.tR1.total:0)+(G&&G.tScore2||0);
+function teacherR1calc(rs){const tr=tm(5).r1;if(!tr)return null;const cmp=(a,b)=>(b.full-a.full)||(a.full?a.el-b.el:(b.c-a.c||a.el-b.el));
+ const all=[...rs.map(r=>({c:r.c,w:r.w,el:r.el,full:r.full,x:0})),{c:tr.c,w:tr.w,el:tr.el,full:!!tr.full,x:1}].sort(cmp);const rank=all.findIndex(r=>r.x),b=[5,3,2,1,0,0][rank];
+ return {b,c:tr.c,w:tr.w,rank:rank+1,total:b+tr.c-tr.w}}
+const teacherR1=()=>G.tR1?`<p>🎓 Your Round 1 (private): +${G.tR1.b} +${G.tR1.c} − ${G.tR1.w} = <b>${G.tR1.total}</b> 💎 (would have placed #${G.tR1.rank})</p>`:`<p class="muted">🎓 You didn't submit Round 1.</p>`;
+function teacherCard(){const t=tTotal(),place=1+G.scores.filter(x=>x>t).length,cor=Object.values(G.tAns||{}).filter(Boolean).length;
+ const line=place===1?"👑 The teacher beats every team!":place===6?"😄 Even the teacher is still learning!":`The teacher would have placed #${place} of 6`;
+ return `<div class="card big center"><h2>🎓 The teacher played along!</h2><div class="reveal">${t} 💎</div><p class="muted">Start 5 + Round 1: ${G.tR1?G.tR1.total:0} + Round 2: ${G.tScore2||0} (${cor} correct)</p><p class="ok">${line}</p></div>`}
+let tFor=-1;
+function teacherR2(){
+ const q=R2[G.qs[G.q]],mine=(G.tAns||{})[G.q],reading=now()<G.qStart+READ;
+ if(tFor===G.q&&$("#tans")&&!G.done&&mine===undefined)return;
+ let h=`<div class="card"><h2>Question ${G.q+1}/${G.qs.length}</h2><div class="row"><p class="scn" style="flex:1 1 300px">${esc(q[2])}</p><div class="timer" id="tm"></div></div>${wordList()}</div><div class="card"><p class="muted">🎓 Shadow mode: your answer is private and doesn't affect the teams.</p>`;
+ if(mine!==undefined)h+=mine?`<p class="ok">✓ Correct! +5 (private)</p>`:`<p class="bad">✗ Not quite. Your answer is locked.</p>`;
+ else if(G.done)h+=`<p class="muted">You didn't answer this one.</p>`;
+ else if(reading)h+=`<p id="twait">📖 Reading… you can answer when the timer ends.</p>`;
+ else h+=`<input id="tans" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Type the word…" aria-label="Your answer"><button id="tgo" style="width:100%">Lock in my answer</button>`;
+ if(G.done)h+=`<hr style="border-color:var(--line)"><p class="ok">${esc(G.msg)}</p><p class="reveal">${q[1]} ${esc(q[0])}</p>${fact(q)}`;
+ h+=`</div>`;app.innerHTML=h;
+ const inp=$("#tans");
+ if(inp){tFor=G.q;const go=()=>{const v=inp.value.trim();if(!v)return;inp.disabled=true;$("#tgo").disabled=true;db.doc("game/tanswer").update({answer:v}).catch(e=>{alert(e.message);inp.disabled=false;$("#tgo").disabled=false})};$("#tgo").onclick=go;inp.onkeydown=e=>{if(e.key==="Enter")go()};inp.focus()}
+ tickTimers();
+}
 const fl=()=>G.flash&&!G.done?`<p class="bad" style="font-size:1.25em">${esc(G.flash)}</p>`:"";
-function board(){$("#board").innerHTML=G?G.scores.map((d,i)=>`<div class="team ${i===me?"me":""}" style="--c:var(--c${i})"><b>${tn(i)}${i===me?" (you)":""}</b><span>${d} 💎</span></div>`).join(""):""}
+function board(){$("#board").innerHTML=G?G.scores.map((d,i)=>`<div class="team ${i===me?"me":""}" style="--c:var(--c${i})"><b>${tn(i)}${i===me?" (you)":""}</b><span>${d} 💎</span></div>`).join("")+(me===5?`<div class="team me" style="--c:var(--c3)"><b>🎓 You (private)</b><span>${tTotal()} 💎</span></div>`:""):""}
 function render(){
  if(!ready)return;
  $("#role").textContent=isAdmin?"Role: Host (admin)":isScreen?"Role: Projector screen":me!=null?"Role: "+tn(me):"";
@@ -227,15 +251,15 @@ function render(){
  board();
  if(isAdmin)return admin();
  if(isScreen)return screen();
- if(me==null){app.innerHTML=`<div class="card"><h2>Choose your team</h2><p>Each team uses one device.</p><div class="chips">${[0,1,2,3,4].map(i=>`<button data-t="${i}">${tn(i)}</button>`).join("")}</div></div>`;
+ if(me==null){app.innerHTML=`<div class="card"><h2>Choose your team</h2><p>Each team uses one device.</p><div class="chips">${[0,1,2,3,4].map(i=>`<button data-t="${i}">${tn(i)}</button>`).join("")}</div><p class="muted" style="margin-top:14px">Teachers: join as an observer. You play along, but your score stays private until the host reveals it.</p><button class="alt" data-t="5" style="width:100%">🎓 I'm a teacher</button></div>`;
   document.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{me=+b.dataset.t;try{sessionStorage.setItem("team",me)}catch(e){}tsave(me,{joined:now()});render()});return}
 if(tready&&G.phase==="lobby"&&!tm(me).joined)tsave(me,{joined:now()});
  player();
 }
 function admin(){
  let h="";const P=G.phase;
- if(P==="lobby")h=`<div class="card"><h2>Lobby</h2><p>Teams that have joined:</p><div class="chips">${[0,1,2,3,4].map(i=>`<span class="chip ${tm(i).joined?"ok":"muted"}">${tn(i)}: ${tm(i).joined?"joined":"waiting"}</span>`).join("")}</div><p class="muted">Open <b>/#screen</b> on the projector device.</p><button id="s1">Start Round 1</button></div>`;
- else if(P==="r1")h=`<div class="card"><h2>Round 1 in progress</h2><div class="timer" id="tm"></div><table><tr><th>Team</th><th>Status</th><th>Correct</th><th>Wrong</th><th>Time</th></tr>${[0,1,2,3,4].map(i=>{const r=tm(i).r1;return `<tr><td>${tn(i)}</td><td>${r?'<span class="ok">Submitted</span>':"Working"}</td><td>${r?r.c:"-"}</td><td>${r?r.w:"-"}</td><td>${r?r.el.toFixed(0)+"s":"-"}</td></tr>`}).join("")}</table><p></p><button id="fin">Close &amp; score Round 1</button></div>`;
+ if(P==="lobby")h=`<div class="card"><h2>Lobby</h2><p>Teams that have joined:</p><div class="chips">${[0,1,2,3,4,5].map(i=>`<span class="chip ${tm(i).joined?"ok":"muted"}">${tn(i)}: ${tm(i).joined?"joined":"waiting"}</span>`).join("")}</div><p class="muted">Open <b>/#screen</b> on the projector device.</p><button id="s1">Start Round 1</button></div>`;
+ else if(P==="r1")h=`<div class="card"><h2>Round 1 in progress</h2><div class="timer" id="tm"></div><table><tr><th>Team</th><th>Status</th><th>Correct</th><th>Wrong</th><th>Time</th></tr>${[0,1,2,3,4,5].map(i=>{const r=tm(i).r1;return `<tr><td>${tn(i)}</td><td>${r?'<span class="ok">Submitted</span>':"Working"}</td><td>${r?r.c:"-"}</td><td>${r?r.w:"-"}</td><td>${r?r.el.toFixed(0)+"s":"-"}</td></tr>`}).join("")}</table><p></p><button id="fin">Close &amp; score Round 1</button></div>`;
  else if(P==="r1result")h=`<div class="card"><h2>Round 1 results</h2>${r1table()}<p></p><div class="row"><button id="rv">Review answers</button><button class="alt" id="s2">Skip to Round 2</button></div></div>`;
  else if(P==="r1review")h=reviewCard(false).replace(/<\/div>$/,`<div class="row" style="margin-top:12px"><button id="nw">${G.rv<R1.length-1?"Next word":"Start Round 2"}</button>${G.rv<R1.length-1?'<button class="alt" id="s2">Skip to Round 2</button>':""}</div></div>`);
  else if(P==="r2"){
@@ -246,7 +270,7 @@ function admin(){
   else if(G.answering!=null)h+=`<h3>${tn(G.answering)} is answering… <span class="timer" id="at" style="font-size:1.3em"></span></h3><p class="muted">The result appears automatically (15s limit).</p><button class="alt" id="ps">They can't answer (pass)</button>`;
   else h+=`<h3>Hands raised (in order)</h3>${rank(bz)}${lockInfo()}<p></p><button class="alt" id="sk">Skip question</button>`;
   h+=`</div>`;
- }else h=`<div class="card"><h2>Journey complete</h2>${winner()}<button id="rs">Play again (reset everything)</button></div>`;
+ }else h=`<div class="card"><h2>Journey complete</h2>${winner()}<p class="muted">🎓 Teacher: ${tm(5).joined?"played, private total "+tTotal()+" 💎":"did not join"}</p>${G.tReveal||!tm(5).joined?"":`<button id="trv">🎓 Reveal the teacher's result</button> `}<button class="alt" id="rs">Play again (reset everything)</button></div>${G.tReveal?teacherCard():""}`;
  app.innerHTML=h;wire();tickTimers();
 }
 function r1table(){return `<table><tr><th>Rank</th><th>Team</th><th>Correct</th><th>Wrong</th><th>Time</th><th>Speed + correct − wrong</th></tr>${G.r1rank.map((r,i)=>`<tr><td>${i+1}</td><td>${tn(r.t)}${r.t===me?" (you)":""}</td><td class="ok">${r.c}</td><td class="bad">${r.w}</td><td>${r.el.toFixed(0)}s</td><td>+${r.b} +${r.c} − ${r.w} = <b>${r.b+r.c-r.w}</b></td></tr>`).join("")}</table><p class="muted">Ranked by finish time (teams that matched all 10 come first). Speed bonus +5 / +3 / +2 / +1 / 0, plus 1 for each correct match, minus 1 for each wrong match.</p>`}
@@ -265,7 +289,7 @@ function screen(){
   else if(G.answering!=null)h+=`<h2>${tn(G.answering)} is answering…</h2><div class="timer huge" id="at"></div>`;
   else h+=bz.length?`<div class="order">${bz.map((i,k)=>`<div class="ord" style="--c:var(--c${i})"><span>${["🥇","🥈","🥉"][k]||k+1}</span><b>${tn(i)}</b><i>${k?"+"+((tm(i).ts-tm(bz[0]).ts)/1000).toFixed(2)+"s":"first!"}</i></div>`).join("")}</div>${lockInfo()}`:`<h3 class="muted" id="rd"></h3>`;
   h+=`</div>`;
- }else h=`<div class="card big center"><h2>Journey complete</h2>${winner()}</div>`;
+ }else h=`<div class="card big center"><h2>Journey complete</h2>${winner()}</div>${G.tReveal?teacherCard():""}`;
  app.innerHTML=h;tickTimers();
 }
 function wire(){
@@ -274,9 +298,9 @@ function wire(){
  on("#fin",()=>{
   const rs=[0,1,2,3,4].map(t=>{const r=tm(t).r1;return r?{t,c:r.c,w:r.w,el:r.el,full:!!r.full}:{t,c:0,w:0,el:120,full:false}}).sort((a,b)=>(b.full-a.full)||(a.full?a.el-b.el:(b.c-a.c||a.el-b.el)));
   const bo=[5,3,2,1,0],sc=[...G.scores];rs.forEach((r,i)=>{r.b=bo[i];sc[r.t]+=r.b+r.c-r.w});
-  save({phase:"r1result",r1rank:rs,scores:sc})});
+  save({phase:"r1result",r1rank:rs,scores:sc,tR1:teacherR1calc(rs)})});
  const startR2=()=>save({phase:"r2",q:0,qs:shuffle(R2.map((_,i)=>i)),qStart:now()+4500,owner:null,steal:false,out:[],answering:null,answer:null,done:false,msg:"",flash:""});
- on("#s2",startR2);on("#nw",()=>G.rv<R1.length-1?save({rv:G.rv+1}):startR2());on("#rv",()=>save({phase:"r1review",rv:0}));
+ on("#s2",startR2);on("#nw",()=>G.rv<R1.length-1?save({rv:G.rv+1}):startR2());on("#rv",()=>save({phase:"r1review",rv:0}));on("#trv",()=>save({tReveal:true}));
  document.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>save({answering:+b.dataset.a,answer:null,flash:""}));
  on("#sk",()=>save({done:true,msg:"Question skipped."}));
  on("#nx",()=>G.q+1<G.qs.length?save({q:G.q+1,qStart:now(),owner:null,steal:false,out:[],answering:null,answer:null,done:false,msg:"",flash:""}):save({phase:"end"}));
@@ -296,6 +320,7 @@ function wire(){
 }
 function player(){
  const P=G.phase,r=tm(me).r1;let h="";
+ if(me===5&&P==="r2")return teacherR2();
  if(P==="r2"&&G.answering===me&&!G.done&&ansFor===G.ansAt&&$("#ans"))return;
  if(P==="lobby")h=`<div class="card center"><h2>${M[me]} You're in!</h2><p>Waiting for the host to start Round 1.</p></div>`;
  else if(P==="r1"){
@@ -305,7 +330,7 @@ function player(){
    formFor=G.r1Start;const opts=r1opts=R1.map(w=>w[0]).sort();
    h=`<div class="card" id="f1"><div class="row"><div class="timer" id="tm"></div><span class="muted" id="cnt">0/10 matched</span><button id="sub" style="margin-left:auto" disabled>Submit</button></div>${shuffle(R1.map((_,i)=>i)).map(i=>`<div class="m"><p>${esc(R1[i][2])}</p><select data-i="${i}" aria-label="Choose a word"><option value="">Choose a word…</option>${opts.map(o=>`<option>${esc(o)}</option>`).join("")}</select></div>`).join("")}</div>`;
   }
- }else if(P==="r1result")h=`<div class="card"><h2>Round 1 results</h2>${r1table()}<p class="muted">Waiting for the host…</p></div>`;
+ }else if(P==="r1result")h=`<div class="card"><h2>Round 1 results</h2>${r1table()}${me===5?teacherR1():""}<p class="muted">Waiting for the host…</p></div>`;
  else if(P==="r1review")h=reviewCard(false);
  else if(P==="r2"){
   const q=R2[G.qs[G.q]],key=G.q+"-"+G.out.length,out=G.out.includes(me);
@@ -317,7 +342,7 @@ function player(){
   else{const mine=tm(me).buzzKey===key,pos=order(key).indexOf(me)+1;
    h+=`<p class="center">${G.steal?"Steal "+G.out.length+"/2! ":""}${mine?(pos?"You are #"+pos+" in line":"Hand raised"):'<span id="rd"></span>'}</p><button id="bz" class="raise" style="--c:var(--c${me})" ${mine||now()<G.qStart+READ?"disabled":""}>${mine?"✋ Raised":"✋ RAISE HAND"}</button>${lockInfo()}`}
   h+=`</div>`;
- }else h=`<div class="card center"><h2>Journey complete</h2>${winner()}</div>`;
+ }else h=`<div class="card center"><h2>Journey complete</h2>${winner()}</div>${G.tReveal?teacherCard():""}`;
  app.innerHTML=h;
  const on=(id,f)=>{const e=$(id);if(e)e.onclick=f};
  on("#sub",submitR1);
@@ -339,6 +364,7 @@ function tickTimers(){
   if(G.phase==="r2"){const rd=now()<G.qStart+READ,h=$("#rd");if(h)h.textContent=rd?"📖 Read the question… hands up when the timer ends":"✋ Raise your hand if you know!";
    const z=$("#bz");if(z&&!isAdmin&&!isScreen&&me!=null&&tm(me).buzzKey!==G.q+"-"+G.out.length){z.disabled=rd;z.textContent=rd?"📖 Reading…":"✋ RAISE HAND"}}
   const b=$("#bw");if(b&&G.buzzAt)b.textContent=Math.max(0,Math.ceil(6-(now()-G.buzzAt)/1000))}
+ if(G&&me===5&&G.phase==="r2"&&$("#twait")&&now()>=G.qStart+READ)render();
  const e=$("#tm");if(!e||!G)return;let left;
  if(G.phase==="r1"){left=Math.min(120,Math.max(0,Math.ceil(120-(now()-G.r1Start)/1000)));e.textContent=Math.floor(left/60)+":"+String(left%60).padStart(2,"0");if(left<=0&&!isAdmin&&!isScreen&&me!=null&&!tm(me).r1&&$("#f1"))submitR1()}
  else if(G.phase==="r2"){left=G.done?0:Math.min(15,Math.max(0,Math.ceil(15-(now()-G.qStart)/1000)));e.textContent=left}

@@ -2,7 +2,7 @@ const http=require("http"),fs=require("fs"),path=require("path");
 const PIN=process.env.ADMIN_PIN||"1234",PORT=process.env.PORT||3000;
 const R2A=["Avalanche","Hallucination","Commercial emporia","Great Game","Caravanserai","Autonomous region","Sedentary civilization"];
 const TN=["🐪 Team 1","🦅 Team 2","🐉 Team 3","🐎 Team 4","🐅 Team 5"];
-const WIN_MS=6000,ANS_MS=15000;
+const READ_MS=15000,WIN_MS=6000,ANS_MS=15000;
 function failTeam(g,team,why){g.out=[...g.out,team];if(!g.steal){g.steal=true;g.owner=team}g.answering=null;g.answer=null;g.flash=why;if(g.out.length>=3){g.done=true;g.msg="No team got it right."}}
 const norm=t=>String(t).toLowerCase().replace(/[^a-z0-9 ]/g,"").replace(/\s+/g," ").trim();
 function judge(team,ans){const g=S.game;if(!g||g.phase!=="r2"||g.done||g.answering!==team)return;
@@ -12,6 +12,8 @@ function judge(team,ans){const g=S.game;if(!g||g.phase!=="r2"||g.done||g.answeri
   else{const h=Math.max(0,Math.floor(sc[g.owner]/2));sc[g.owner]-=h;sc[team]+=h;g.msg=`${TN[team]} stole it and takes ${h} 💎 from ${TN[g.owner]}`}
   g.scores=sc;g.done=true;g.answering=null;g.answer=right;g.flash="";
  }else failTeam(g,team,`${TN[team]} answered wrong!`);}
+function tAnswer(ans){const g=S.game;if(!g||g.phase!=="r2"||g.done||Date.now()<g.qStart+READ_MS-300)return;g.tAns=g.tAns||{};if(g.tAns[g.q]!==undefined)return;
+ const ok=norm(ans)===norm(R2A[g.qs[g.q]]);g.tAns[g.q]=ok?1:0;if(ok)g.tScore2=(g.tScore2||0)+5}
 function fastest(g,key){return [0,1,2,3,4].filter(i=>S.teams["t"+i]&&S.teams["t"+i].buzzKey===key&&!g.out.includes(i)).sort((a,b)=>S.teams["t"+a].ts-S.teams["t"+b].ts)[0]}
 function onBuzz(){const g=S.game;if(!g||g.phase!=="r2"||g.done||g.answering!=null)return;
  const key=g.q+"-"+g.out.length;if(g.buzzKey===key||fastest(g,key)===undefined)return;
@@ -27,11 +29,12 @@ http.createServer((req,res)=>{
  if(req.url==="/events"){res.writeHead(200,{"Content-Type":"text/event-stream","Cache-Control":"no-cache",Connection:"keep-alive"});res.write(`data: ${JSON.stringify({...S,now:Date.now()})}\n\n`);cl.add(res);req.on("close",()=>cl.delete(res));return}
  if(req.url==="/api"&&req.method==="POST"){let b="";req.on("data",c=>b+=c);req.on("end",()=>{try{
   const {path:p,op,data,pin}=JSON.parse(b),adm=pin===PIN;
-  if(p==="game/answer"){if(!data||typeof data.answer!=="string"||data.answer.length>80)throw 0;judge(+data.team,data.answer)}
+  if(p==="game/tanswer"){if(!data||typeof data.answer!=="string"||data.answer.length>80)throw 0;tAnswer(data.answer)}
+  else if(p==="game/answer"){if(!data||typeof data.answer!=="string"||data.answer.length>80)throw 0;judge(+data.team,data.answer)}
   else if(p==="game/state"){
    if(op==="set"){if(!adm)throw 0;S.game=data}
    else{const k=Object.keys(data);if(!adm&&!(k.length===1&&k[0]==="answer"))throw 0;S.game={...S.game,...data}}
-  }else if(/^teams\/t[0-4]$/.test(p)){
+  }else if(/^teams\/t[0-5]$/.test(p)){
    if(data&&data.buzzKey){const g=S.game;if(g&&g.phase==="r2"&&Date.now()<g.qStart+15000-300)throw 0;if(g&&g.phase==="r2"&&g.out.includes(+p.slice(7)))throw 0}
    const id=p.slice(6);if(data&&"ts" in data)data.ts=Date.now();if(op==="set"){if(!adm)throw 0;S.teams[id]=data}else S.teams[id]={...S.teams[id],...data}
   }else throw 0;
